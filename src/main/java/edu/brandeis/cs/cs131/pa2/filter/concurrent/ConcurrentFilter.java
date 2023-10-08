@@ -17,7 +17,7 @@ public abstract class ConcurrentFilter extends Filter implements Runnable {
 	 */
 	protected ConcurrentPipe output;
 	
-	private boolean running = false;
+	protected boolean running;
 
 	@Override
 	public void setPrevFilter(Filter prevFilter) {
@@ -41,23 +41,36 @@ public abstract class ConcurrentFilter extends Filter implements Runnable {
 
 	/**
 	 * Processes the input pipe and passes the result to the output pipe
+	 * @throws InterruptedException 
 	 */
-	public void process() {
-		while(running) {
-			
-		}
-		while (!input.isEmpty()) {
-			String line = input.read();
-			String processedLine = processLine(line);
-			if (processedLine != null) {
-				output.write(processedLine);
+	public void process() throws InterruptedException {
+		while (running) {
+			if(!input.isEmpty()) {
+				String line = input.readAndWait();
+				if(line == null) {
+					this.running = false;
+					if(output != null)
+						output.writePoisonPill();
+				} else {
+					String processedLine = processLine(line);
+					if (processedLine != null && output != null) {
+						output.writeAndWait(processedLine);
+					}
+				}
 			}
 		}
 	}
 	
+	
+	/**
+	 * Requirement for Runnable compatibility. Starts filter process and handles interrupts.
+	 */
 	public void run() {
 		this.running = true;
-		this.process();
+		try {
+			this.process();
+		} catch(Exception e) {}
+		this.running = false;
 	}
 
 	/**
@@ -70,9 +83,5 @@ public abstract class ConcurrentFilter extends Filter implements Runnable {
 	 * @return the line after the filter-specific processing
 	 */
 	protected abstract String processLine(String line);
-	
-//	protected abstract void complete();
-	
-	
 
 }

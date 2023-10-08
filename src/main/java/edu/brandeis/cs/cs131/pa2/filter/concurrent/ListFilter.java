@@ -40,15 +40,15 @@ public class ListFilter extends ConcurrentFilter {
 	/**
 	 * Overrides {@link ConcurrentFilter#process()} to add the files located in
 	 * the current working directory to the output queue.
+	 * @throws InterruptedException 
 	 */
 	@Override
-	public void process() {
+	public void process() throws InterruptedException {
 		File cwd = new File(CurrentWorkingDirectory.get());
 		File[] files = cwd.listFiles();
-		for (File f : files) {
-			this.output.write(f.getName());
-		}
-
+		for (File f : files)
+			this.output.writeAndWait(f.getName());
+		this.output.writePoisonPill();
 	}
 
 	/**

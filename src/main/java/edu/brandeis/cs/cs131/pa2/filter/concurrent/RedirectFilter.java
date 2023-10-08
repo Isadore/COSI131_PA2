@@ -74,12 +74,13 @@ public class RedirectFilter extends ConcurrentFilter {
 	public void process() {
 		try {
 			printWriter = new PrintWriter(new FileWriter(new File(dest)));
-			super.process();
+			try {
+				super.process();
+			} catch (InterruptedException e) {}
 			printWriter.close();
 		} catch (IOException e) {
 			// do nothing we know file exists
 		}
-
 	}
 
 	/**

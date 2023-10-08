@@ -73,6 +73,7 @@ public class CatFilter extends ConcurrentFilter {
 	/**
 	 * Overrides {@link ConcurrentFilter#process()} to push lines of input from file
 	 * specified in command to the output.
+	 * @throws InterruptedException 
 	 */
 	@Override
 	public void process() {
@@ -83,15 +84,19 @@ public class CatFilter extends ConcurrentFilter {
 		try {
 			s = new Scanner(file);
 			while (s.hasNextLine()) {
-				output.write(s.nextLine());
+				output.writeAndWait(s.nextLine());
 			}
+			output.writePoisonPill();
 		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (InterruptedException e) {
+			// nothing
 		} finally {
 			if (s != null) {
 				s.close();
 			}
 		}
-
+		
 	}
 
 	/**

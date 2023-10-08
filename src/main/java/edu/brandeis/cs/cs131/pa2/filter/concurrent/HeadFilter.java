@@ -30,14 +30,23 @@ public class HeadFilter extends ConcurrentFilter {
 	/**
 	 * Overrides {@link ConcurrentFilter#process()} to only add up to 10 lines to
 	 * the output queue.
+	 * @throws InterruptedException 
 	 */
 	@Override
-	public void process() {
-		while (!input.isEmpty() && numRead < LIMIT) {
-			String line = input.read();
-			output.write(line);
-			numRead++;
+	public void process() throws InterruptedException {
+		while (running && numRead < LIMIT) {
+			if(!input.isEmpty()) {
+				numRead++;
+				String line = input.readAndWait();
+				if(line == null) {
+					running = false;
+				} else {
+					output.writeAndWait(line);
+				}
+			}
 		}
+		running = false;
+		output.writePoisonPill();
 	}
 
 	/**

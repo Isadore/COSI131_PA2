@@ -19,7 +19,7 @@ import edu.brandeis.cs.cs131.pa2.filter.Message;
 		REPL_JobsTests.class })
 public class AllConcurrentTests {
 
-	final static boolean DEBUGGING_MODE = true;
+	final static boolean DEBUGGING_MODE = false;
 
 	@BeforeClass
 	public static void setUp() {

@@ -29,10 +29,12 @@ public class WorkingDirectoryFilter extends ConcurrentFilter {
 	/**
 	 * Overrides {@link ConcurrentFilter#process()} by adding
 	 * {@link SequentialREPL#currentWorkingDirectory} to the output queue
+	 * @throws InterruptedException 
 	 */
 	@Override
-	public void process() {
-		this.output.write(CurrentWorkingDirectory.get());
+	public void process() throws InterruptedException {
+		this.output.writeAndWait(CurrentWorkingDirectory.get());
+		this.output.writePoisonPill();
 	}
 
 	/**

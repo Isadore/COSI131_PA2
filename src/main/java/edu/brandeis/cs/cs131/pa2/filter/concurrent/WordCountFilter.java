@@ -38,14 +38,20 @@ public class WordCountFilter extends ConcurrentFilter {
 	 * Overrides {@link ConcurrentFilter#process()} by computing the word count,
 	 * line count, and character count then adding the string with line count + " "
 	 * + word count + " " + character count to the output queue
+	 * @throws InterruptedException 
 	 */
 	@Override
-	public void process() {
-		while (!input.isEmpty()) {
-			String line = input.read();
-			processLine(line);
+	public void process() throws InterruptedException {
+		while (!input.isEmpty() || running) {
+			String line = input.readAndWait();
+			if(line == null) {
+				running = false;
+			} else {
+				processLine(line);
+			}
 		}
-		output.write(lineCount + " " + wordCount + " " + charCount);
+		output.writeAndWait(lineCount + " " + wordCount + " " + charCount);
+		output.writePoisonPill();
 	}
 
 	/**

@@ -32,28 +32,33 @@ public class TailFilter extends ConcurrentFilter {
 	/**
 	 * Overrides {@link ConcurrentFilter#process()} to only add up to 10 lines to
 	 * the output queue.
+	 * @throws InterruptedException 
 	 */
 	@Override
-	public void process() {
+	public void process() throws InterruptedException {
 
 		// until the input is empty, add line to end of buffer if buffer reached LIMIT,
 		// remove the head (LinkedList makes this O(1)), could also use Queue/Deque
 		// removing the head removes the oldest line seen so far - this way buf will
 		// hold the last 10 lines of the input (or as many lines were in the input if
 		// the input had < 10 lines)
-		while (!input.isEmpty()) {
-			String line = input.read();
-			buf.add(line);
-			if (buf.size() > LIMIT) {
-				buf.remove(0);
+		while (running || !input.isEmpty()) {
+			String line = input.readAndWait();
+			if(line == null) {
+				running = false;
+			} else {
+				buf.add(line);
+				if (buf.size() > LIMIT) {
+					buf.remove(0);
+				}
 			}
 		}
 
 		// once we're done with the input (and have identified the last 10 lines), add
 		// them to the output in the order in which they appeared in the input
-		while (!buf.isEmpty()) {
-			output.write(buf.remove(0));
-		}
+		while (!buf.isEmpty())
+			output.writeAndWait(buf.remove(0));
+		output.writePoisonPill();
 	}
 
 	/**
